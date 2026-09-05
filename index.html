@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101417">
+<meta name="description" content="Rotate a corked wine bottle and watch the liquid slosh, splash, and settle under gravity. A self-contained, interactive 2D fluid simulation.">
+<title>Wine in motion — Liquid playground</title>
+<style>
+:root{color-scheme:dark;--bg:#101417;--panel:#181e22;--line:#333c41;--ink:#f0efe9;--muted:#abb3b8;--wine:#d67187;--accent:#e7ba80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{color:inherit;cursor:pointer}button:focus-visible,input:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:5px}button{border:1px solid var(--line);border-radius:8px;background:#20282e;min-height:44px;padding:9px 14px;transition:background .15s,border-color .15s}button:hover{background:#2d373d;border-color:#66757d}button:active{transform:translateY(1px)}button svg{width:17px;height:17px;vertical-align:-3px;margin-right:7px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+main{width:min(1280px,100%);min-height:100svh;margin:auto;padding:32px 42px 22px;display:flex;flex-direction:column}header{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-bottom:22px}h1{font:normal clamp(30px,3vw,43px)/1.12 Georgia,"Times New Roman",serif;letter-spacing:-1.2px;margin:0}header p{margin:8px 0 0;color:var(--muted);font-size:15px}.wordmark{font-size:12px;letter-spacing:2.3px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}.edition{align-self:flex-start;margin-top:9px;color:var(--muted);font-size:13px;letter-spacing:1px}.edition span{color:var(--ink);margin-left:12px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 296px;border:1px solid var(--line);border-radius:16px;overflow:hidden;flex:1;min-height:570px}.stage{position:relative;min-width:0;min-height:540px;background:radial-gradient(ellipse at 50% 42%,#263038 0%,#1b2329 42%,#151c21 80%);overflow:hidden}.stage:after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 70px #090d1120}canvas#scene{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:none;cursor:grab}canvas#scene:active{cursor:grabbing}.stage-top{position:absolute;top:23px;left:25px;right:25px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;font-size:12px;letter-spacing:1.5px;color:#afb9bf}.stage-top .wine-tag{color:#dda8b6}.instruction{position:absolute;bottom:23px;left:16px;right:16px;text-align:center;pointer-events:none;font-size:14px;color:#bbc4c9}.instruction strong{font-weight:500;color:#efede9}.angle-chip{position:absolute;top:55px;right:25px;color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums;pointer-events:none}.paused-note{position:absolute;left:50%;top:25px;transform:translateX(-50%);background:#0d1218d9;padding:6px 15px;border:1px solid #53616b;border-radius:50px;font-size:13px;pointer-events:none}.paused-note[hidden]{display:none}
+aside{background:var(--panel);border-left:1px solid var(--line);padding:27px 25px;display:flex;flex-direction:column;gap:28px}.section-label{color:#d1d7d9;font-size:12px;letter-spacing:1.9px;text-transform:uppercase;margin:0 0 19px}.control-label{display:flex;justify-content:space-between;align-items:baseline;gap:15px;margin-bottom:11px;font-size:15px}.control-label output{font-variant-numeric:tabular-nums;color:var(--accent);font-size:16px}.range{display:block;width:100%;height:26px;margin:0;accent-color:var(--accent);cursor:pointer}.range-scale{display:flex;justify-content:space-between;margin-top:4px;color:#87949c;font-size:12px}.button-row{display:flex;gap:8px;margin-top:16px}.button-row button{flex:1;font-size:14px}.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-row button{font-size:14px}.primary{background:#e7ba80;color:#24201c;border-color:#e7ba80}.primary:hover{background:#f4ce9c;border-color:#f4ce9c}.rule{height:1px;background:var(--line);margin:0}.note{color:var(--muted);font-size:14px;margin:0}.physics-note{margin-top:auto;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}.physics-note summary{cursor:pointer;color:#d0d7da;font-size:14px}.physics-note p{margin:11px 0 0;line-height:1.6}.control-group{margin:0}footer{display:flex;justify-content:space-between;align-items:center;gap:20px;color:#929fa7;font-size:12px;padding:17px 3px 0}footer span:last-child{color:#b7a791}kbd{font:11px system-ui;border:1px solid #475259;border-bottom-width:2px;border-radius:4px;padding:1px 5px;margin:0 2px;color:#c6d0d5}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(min-width:1450px){main{padding-top:48px;padding-bottom:35px;max-height:980px}.workspace{min-height:670px}}@media(max-width:800px){main{padding:20px 16px 18px}.workspace{grid-template-columns:minmax(0,1fr) 252px}aside{padding:23px 18px;gap:23px}header{padding-bottom:20px}.stage-top{left:18px;right:18px}.stage{min-height:500px}.edition{display:none}}@media(max-width:620px){main{padding:20px 12px 15px}header{padding:0 5px 20px}h1{font-size:34px}header p{font-size:14px}.workspace{display:flex;flex-direction:column;min-height:0}.stage{min-height:430px;height:54svh;max-height:570px}aside{display:grid;grid-template-columns:1fr 1fr;border-left:0;border-top:1px solid var(--line);padding:23px 19px;gap:22px}.section-label{margin-bottom:15px}.control-group{min-width:0}.rotation{grid-column:1/-1}.rotation .button-row{margin-top:10px}.rule{display:none}.action-area{display:flex;flex-direction:column;justify-content:center}.action-row{grid-template-columns:1fr;gap:7px}.physics-note{grid-column:1/-1;margin-top:0;padding-top:15px}.note{grid-column:1/-1}.instruction{font-size:13px;bottom:16px}.stage-top{top:18px}.angle-chip{top:44px;right:18px}footer{font-size:12px;padding:14px 4px 0}footer .keys{display:none}.paused-note{top:46px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <header><div><div class="wordmark">Liquid playground</div><h1>Wine in motion.</h1><p>Give it a turn. Let gravity do the rest.</p></div><div class="edition">2D EXPERIMENT <span>01</span></div></header>
+  <div class="workspace">
+    <section class="stage" aria-label="Interactive wine bottle">
+      <div class="stage-top"><span>CORKED BOTTLE</span><span class="wine-tag">RED WINE</span></div>
+      <div class="angle-chip" id="angleChip">0°</div>
+      <div class="paused-note" id="pausedNote" hidden>Paused</div>
+      <canvas id="scene" tabindex="0" aria-label="Wine bottle. Drag around its centre to rotate, or use the left and right arrow keys. Use the rotation slider for precise control.">Use a modern browser with Canvas support to view this simulation.</canvas>
+      <div class="instruction" id="hint"><strong>Drag around the bottle</strong> to rotate it</div>
+    </section>
+    <aside aria-label="Simulation controls">
+      <div class="control-group rotation"><p class="section-label">Take it for a spin</p><label class="control-label" for="rotation">Rotation <output for="rotation" id="angleValue">0°</output></label><input class="range" type="range" id="rotation" min="-180" max="180" step="1" value="0"><div class="range-scale"><span>−180°</span><span>0°</span><span>180°</span></div><div class="button-row"><button id="left" aria-label="Rotate left by 45 degrees">↶ 45°</button><button id="upright">Upright</button><button id="right" aria-label="Rotate right by 45 degrees">45° ↷</button></div></div>
+      <div class="rule"></div>
+      <div class="control-group"><p class="section-label">In the bottle</p><label class="control-label" for="fill">Fill level <output for="fill" id="fillValue">58%</output></label><input class="range" type="range" id="fill" min="15" max="85" step="1" value="58"><div class="range-scale"><span>15%</span><span>85%</span></div></div>
+      <div class="action-area"><div class="action-row"><button id="pause"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4v12M13 4v12"/></svg><span>Pause</span></button><button id="reset" class="primary"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7a6.5 6.5 0 1 1-.5 5M4 3v4h4"/></svg>Reset</button></div></div>
+      <p class="note">Slow turns tilt the bottle beneath the wine. Quick turns send it splashing.</p>
+      <details class="physics-note"><summary>About the physics</summary><p>The wine is simulated with interacting fluid particles, gravity, pressure, viscosity, and moving bottle walls. Liquid volume is represented by a fixed particle count. The cork keeps it contained at every angle.</p><p>This is a real-time 2D approximation, not an engineering-grade fluid model. Changing the fill level resets the liquid. Rotation is limited to keep very fast gestures stable.</p></details>
+    </aside>
+  </div>
+  <footer><span class="keys"><kbd>←</kbd><kbd>→</kbd> rotate &nbsp; <kbd>Space</kbd> pause &nbsp; <kbd>R</kbd> reset</span><span>Gravity stays down. The bottle is yours.</span></footer>
+</main>
+<script id="physics">
+/* Self-contained hybrid FLIP/PIC fluid solver. Coordinates and velocities are
+   expressed in the bottle's current basis; velocity remains inertial, not
+   relative to the walls. Basis changes therefore preserve world momentum. */
+(()=>{
+'use strict';
+const TOP=-1.91, BOTTOM=1.70, SPACING=.045, H=SPACING*2.15, H2=H*H;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function widthAt(y){
+  if(y < -1.13)return .177;
+  if(y < -.57){const t=(y+1.13)/.56;return .177+.423*t*t*(3-2*t);}
+  if(y <=1.54)return .6;
+  const t=clamp((y-1.54)/.16,0,1);return .44+.16*Math.sqrt(Math.max(0,1-t*t));
+}
+function slopeAt(y){
+  if(y>=-1.13&&y<-.57){const t=(y+1.13)/.56;return .423*6*t*(1-t)/.56;}
+  if(y>1.54){const t=clamp((y-1.54)/.16,0,.9999);return -t/Math.sqrt(1-t*t);}
+  return 0;
+}
+function inside(x,y,margin=0){return y>=TOP+margin&&y<=BOTTOM-margin&&Math.abs(x)<=widthAt(y)-margin;}
+const outline=[];
+for(let y=TOP;y<BOTTOM;y+=.025)outline.push([widthAt(y),y]);
+outline.push([widthAt(BOTTOM),BOTTOM]);
+for(let k=outline.length-1;k>=0;k--)outline.push([-outline[k][0],outline[k][1]]);
+let restDensity=0;
+for(let row=-3;row<=3;row++)for(let col=-3;col<=3;col++){
+  const x=(col+(row&1)*.5)*SPACING,y=row*SPACING*Math.sqrt(3)/2,q=1-(x*x+y*y)/H2;
+  if(q>0)restDensity+=q*q*q;
+}
+const lattice=[],ghosts=[];
+let row=0;
+for(let y=TOP-2*H;y<=BOTTOM+2*H;y+=SPACING*Math.sqrt(3)/2,row++){
+  for(let x=-.6-2*H+(row&1)*SPACING*.5;x<=.6+2*H;x+=SPACING){
+    if(inside(x,y,SPACING*.48))lattice.push([x,y]);
+    else if(!inside(x,y,0)){
+      const yy=clamp(y,TOP,BOTTOM),xx=clamp(x,-widthAt(yy),widthAt(yy));
+      if(Math.hypot(x-xx,y-yy)<H*1.15)ghosts.push([x,y]);
+    }
+  }
+}
+class Fluid{
+  constructor(fill=.58,angle=0){this.angle=angle;this.time=0;this.reset(fill,angle);}
+  reset(fill=this.fill,angle=this.angle){
+    this.fill=clamp(fill,.15,.85);this.angle=angle;this.time=0;
+    const c=Math.cos(angle),s=Math.sin(angle);
+    const seeds=lattice.slice().sort((a,b)=>(s*b[0]+c*b[1])-(s*a[0]+c*a[1]));
+    this.n=Math.round(seeds.length*this.fill);this.total=this.n;
+    for(const key of ['x','y','vx','vy','oldX','oldY'])this[key]=new Float32Array(this.n);
+    for(let i=0;i<this.n;i++){this.x[i]=seeds[i][0];this.y[i]=seeds[i][1];}
+    this.gw=24;this.gh=58;this.head=new Int32Array(this.gw*this.gh);this.next=new Int32Array(this.n);
+    this.h=.075;this.nx=25;this.ny=56;this.ox=-.9375;this.oy=-2.1375;
+    const size=this.nx*this.ny;
+    for(const key of ['u','v','wu','wv','prevU','prevV','density'])this[key]=new Float32Array(size);
+    this.solid=new Uint8Array(size);this.type=new Uint8Array(size);
+    for(const key of ['pressure','residual','search','ap','precond','diagonal'])this[key]=new Float64Array(size);
+    this.active=new Int32Array(size);
+    for(let j=0;j<this.ny;j++)for(let i=0;i<this.nx;i++){
+      this.solid[i+j*this.nx]=inside(this.ox+(i+.5)*this.h,this.oy+(j+.5)*this.h)?0:1;
+    }
+    this.rest=this.h*this.h/(SPACING*SPACING*Math.sqrt(3)/2);this.speed=0;
+  }
+  constrain(i){
+    let x=this.x[i],y=this.y[i];const margin=SPACING*.35;
+    for(let k=0;k<3;k++){
+      y=clamp(y,TOP+margin,BOTTOM-margin);
+      const excess=Math.abs(x)-widthAt(y)+margin;
+      if(excess>0){const slope=slopeAt(y),denom=1+slope*slope;x-=Math.sign(x)*excess/denom;y+=slope*excess/denom;}
+    }
+    y=clamp(y,TOP+margin,BOTTOM-margin);x=clamp(x,-widthAt(y)+margin,widthAt(y)-margin);
+    this.x[i]=x;this.y[i]=y;
+  }
+  separate(){
+    this.head.fill(-1);
+    for(let i=0;i<this.n;i++){
+      const gx=clamp(Math.floor((this.x[i]+.95)/H),0,this.gw-1),gy=clamp(Math.floor((this.y[i]+2.3)/H),0,this.gh-1),cell=gx+gy*this.gw;
+      this.next[i]=this.head[cell];this.head[cell]=i;
+    }
+    const distance=SPACING*.96,dist2=distance*distance;
+    for(let i=0;i<this.n;i++){
+      const gx=clamp(Math.floor((this.x[i]+.95)/H),0,this.gw-1),gy=clamp(Math.floor((this.y[i]+2.3)/H),0,this.gh-1);
+      for(let cy=Math.max(0,gy-1);cy<=Math.min(this.gh-1,gy+1);cy++)for(let cx=Math.max(0,gx-1);cx<=Math.min(this.gw-1,gx+1);cx++){
+        let j=this.head[cx+cy*this.gw];
+        while(j!==-1){
+          if(j>i){let dx=this.x[j]-this.x[i],dy=this.y[j]-this.y[i],d2=dx*dx+dy*dy;
+            if(d2<dist2&&d2>1e-12){const d=Math.sqrt(d2),f=.5*(distance-d)/d;dx*=f;dy*=f;this.x[i]-=dx;this.y[i]-=dy;this.x[j]+=dx;this.y[j]+=dy;}
+          }j=this.next[j];
+        }
+      }
+    }
+    for(let i=0;i<this.n;i++)this.constrain(i);
+  }
+  splat(array,weights,x,y,value){
+    const i=clamp(Math.floor(x),0,this.nx-2),j=clamp(Math.floor(y),0,this.ny-2),fx=clamp(x-i,0,1),fy=clamp(y-j,0,1),k=i+j*this.nx;
+    const a=(1-fx)*(1-fy),b=fx*(1-fy),c=(1-fx)*fy,d=fx*fy;
+    array[k]+=a*value;array[k+1]+=b*value;array[k+this.nx]+=c*value;array[k+this.nx+1]+=d*value;
+    if(weights){weights[k]+=a;weights[k+1]+=b;weights[k+this.nx]+=c;weights[k+this.nx+1]+=d;}
+  }
+  sample(array,previous,x,y,axis,oldVelocity){
+    const i=clamp(Math.floor(x),1,this.nx-3),j=clamp(Math.floor(y),1,this.ny-3),fx=clamp(x-i,0,1),fy=clamp(y-j,0,1),base=i+j*this.nx;
+    let sum=0,pic=0,delta=0;
+    for(let yy=0;yy<2;yy++)for(let xx=0;xx<2;xx++){
+      const k=base+xx+yy*this.nx,neighbour=k-(axis===0?1:this.nx);
+      if(this.type[k]!==1&&this.type[neighbour]!==1)continue;
+      const w=(xx?fx:1-fx)*(yy?fy:1-fy);sum+=w;pic+=w*array[k];delta+=w*(array[k]-previous[k]);
+    }
+    if(sum===0)return oldVelocity;
+    const flip=oldVelocity+delta/sum;
+    return .82*flip+.18*pic/sum;
+  }
+  step(dt,newAngle){
+    const da=newAngle-this.angle,c=Math.cos(da),s=Math.sin(da),omega=da/dt;
+    this.angle=newAngle;this.time+=dt;
+    const gravity=9.81/(.30/(BOTTOM-TOP)),gx=Math.sin(newAngle)*gravity,gy=Math.cos(newAngle)*gravity;
+    // Advection in an inertial frame, re-expressed in the new bottle basis.
+    for(let i=0;i<this.n;i++){
+      const x=c*this.x[i]+s*this.y[i],y=-s*this.x[i]+c*this.y[i];
+      const vx=c*this.vx[i]+s*this.vy[i],vy=-s*this.vx[i]+c*this.vy[i];
+      this.oldX[i]=x;this.oldY[i]=y;this.x[i]=x+vx*dt;this.y[i]=y+vy*dt;this.constrain(i);
+      this.vx[i]=(this.x[i]-x)/dt+gx*dt;this.vy[i]=(this.y[i]-y)/dt+gy*dt;
+    }
+    // Particle regularisation prevents gaps and represents a constant volume.
+    this.separate();this.separate();
+    this.u.fill(0);this.v.fill(0);this.wu.fill(0);this.wv.fill(0);this.density.fill(0);this.type.fill(0);
+    for(let k=0;k<this.type.length;k++)if(this.solid[k])this.type[k]=2;
+    for(let i=0;i<this.n;i++){
+      const x=(this.x[i]-this.ox)/this.h,y=(this.y[i]-this.oy)/this.h;
+      const cell=clamp(Math.floor(x),0,this.nx-1)+clamp(Math.floor(y),0,this.ny-1)*this.nx;
+      if(!this.solid[cell])this.type[cell]=1;
+      this.splat(this.u,this.wu,x,y-.5,this.vx[i]);this.splat(this.v,this.wv,x-.5,y,this.vy[i]);
+      this.splat(this.density,null,x-.5,y-.5,1);
+    }
+    for(let j=1;j<this.ny-1;j++)for(let i=1;i<this.nx-1;i++){
+      const k=i+j*this.nx;
+      if(this.wu[k]>0)this.u[k]/=this.wu[k];if(this.wv[k]>0)this.v[k]/=this.wv[k];
+      // Prescribed normal velocities of rotating impermeable walls.
+      if(this.solid[k]||this.solid[k-1])this.u[k]=-omega*(this.oy+(j+.5)*this.h);
+      if(this.solid[k]||this.solid[k-this.nx])this.v[k]=omega*(this.ox+(i+.5)*this.h);
+    }
+    this.prevU.set(this.u);this.prevV.set(this.v);
+    // Solve the free-surface Poisson system with preconditioned conjugate
+    // gradients, resolving pressure throughout the liquid column each step.
+    const P=this.pressure,R=this.residual,D=this.search,A=this.ap,Z=this.precond,diag=this.diagonal;
+    P.fill(0);D.fill(0);let count=0,rz=0;
+    for(let j=1;j<this.ny-1;j++)for(let i=1;i<this.nx-1;i++){
+      const k=i+j*this.nx;if(this.type[k]!==1)continue;this.active[count++]=k;
+      diag[k]=4-this.solid[k-1]-this.solid[k+1]-this.solid[k-this.nx]-this.solid[k+this.nx];
+      const div=this.u[k+1]-this.u[k]+this.v[k+this.nx]-this.v[k];
+      const compression=Math.max(0,this.density[k]/this.rest-1);
+      R[k]=-div+.025*this.h/dt*compression;Z[k]=R[k]/Math.max(1,diag[k]);D[k]=Z[k];rz+=R[k]*Z[k];
+    }
+    const tolerance=Math.max(1e-12,rz*1e-8);
+    for(let iteration=0;iteration<100&&rz>tolerance;iteration++){
+      let dAd=0;
+      for(let a=0;a<count;a++){
+        const k=this.active[a];A[k]=diag[k]*D[k];
+        if(this.type[k-1]===1)A[k]-=D[k-1];if(this.type[k+1]===1)A[k]-=D[k+1];
+        if(this.type[k-this.nx]===1)A[k]-=D[k-this.nx];if(this.type[k+this.nx]===1)A[k]-=D[k+this.nx];
+        dAd+=D[k]*A[k];
+      }
+      if(dAd<1e-20)break;const alpha=rz/dAd;let nextRz=0;
+      for(let a=0;a<count;a++){const k=this.active[a];P[k]+=alpha*D[k];R[k]-=alpha*A[k];Z[k]=R[k]/Math.max(1,diag[k]);nextRz+=R[k]*Z[k];}
+      const beta=nextRz/rz;
+      for(let a=0;a<count;a++){const k=this.active[a];D[k]=Z[k]+beta*D[k];}
+      rz=nextRz;
+    }
+    for(let j=1;j<this.ny-1;j++)for(let i=1;i<this.nx-1;i++){
+      const k=i+j*this.nx;
+      if(!this.solid[k]&&!this.solid[k-1])this.u[k]+=(this.type[k-1]===1?P[k-1]:0)-(this.type[k]===1?P[k]:0);
+      if(!this.solid[k]&&!this.solid[k-this.nx])this.v[k]+=(this.type[k-this.nx]===1?P[k-this.nx]:0)-(this.type[k]===1?P[k]:0);
+    }
+    let energy=0;
+    for(let i=0;i<this.n;i++){
+      const x=(this.x[i]-this.ox)/this.h,y=(this.y[i]-this.oy)/this.h;
+      let vx=this.sample(this.u,this.prevU,x,y-.5,0,this.vx[i]),vy=this.sample(this.v,this.prevV,x-.5,y,1,this.vy[i]);
+      const gap=Math.min(this.y[i]-TOP,BOTTOM-this.y[i],widthAt(this.y[i])-Math.abs(this.x[i]));
+      if(gap<SPACING*.8){vx+=(-omega*this.y[i]-vx)*.018;vy+=(omega*this.x[i]-vy)*.018;}
+      const damping=Math.exp(-.14*dt);vx*=damping;vy*=damping;
+      const speed=Math.hypot(vx,vy),factor=speed>32?32/speed:1;
+      this.vx[i]=vx*factor;this.vy[i]=vy*factor;energy+=vx*vx+vy*vy;
+    }
+    this.speed=Math.sqrt(energy/this.n);
+  }
+}
+globalThis.WinePhysics={Fluid,outline,widthAt,inside,TOP,BOTTOM,SPACING,H,restDensity,latticeCount:lattice.length};
+})();
+</script>
+<script id="interface">
+(()=>{
+'use strict';
+const {Fluid,outline,TOP,BOTTOM,SPACING}=WinePhysics;
+const $=id=>document.getElementById(id),canvas=$('scene'),ctx=canvas.getContext('2d',{alpha:false});
+const fluid=new Fluid(.58,0);
+let angle=0,targetAngle=0,paused=false,dragging=false,previousPointer=0,dragId=null;
+let viewW=0,viewH=0,scale=100,cx=0,cy=0,dpr=1,last=0,accumulator=0,lastUI=0;
+const dt=1/90,maxTurnSpeed=5.5;
+const colour=document.createElement('canvas'),cctx=colour.getContext('2d');
+const mask=document.createElement('canvas'),mctx=mask.getContext('2d',{willReadFrequently:true});
+const smooth=document.createElement('canvas'),sctx=smooth.getContext('2d',{willReadFrequently:true});
+const SW=200,SH=470,MS=110,MX=SW/2,MY=SH/2+10;
+for(const c of [colour,mask,smooth]){c.width=SW;c.height=SH;}
+const bottlePath=new Path2D();outline.forEach(([x,y],i)=>i?bottlePath.lineTo(x,y):bottlePath.moveTo(x,y));bottlePath.closePath();
+function resize(){
+  const r=canvas.parentElement.getBoundingClientRect();viewW=r.width;viewH=r.height;dpr=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.round(viewW*dpr);canvas.height=Math.round(viewH*dpr);
+  scale=Math.min((viewW-66)/4.1,(viewH-114)/4.1,141);scale=Math.max(scale,38);
+  cx=viewW/2;cy=viewH/2+10;render();
+}
+new ResizeObserver(resize).observe(canvas.parentElement);
+function normalized(a){let d=a*180/Math.PI;d=((d+180)%360+360)%360-180;return Math.round(d);}
+function sync(){const deg=normalized(angle);$('angleValue').textContent=deg+'°';$('angleChip').textContent=deg+'°';if(document.activeElement!==$('rotation'))$('rotation').value=deg;$('rotation').setAttribute('aria-valuetext',$('rotation').value+' degrees');}
+function setTarget(a){targetAngle=a;}
+function pauseToggle(){
+  paused=!paused;$('pausedNote').hidden=!paused;
+  $('pause').innerHTML=paused?'<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 3 10 7-10 7z"/></svg><span>Resume</span>':'<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4v12M13 4v12"/></svg><span>Pause</span>';
+  $('pause').setAttribute('aria-pressed',String(paused));accumulator=0;
+}
+function reset(){angle=0;targetAngle=0;fluid.reset(.58,0);$('fill').value=58;$('fillValue').textContent='58%';if(paused)pauseToggle();sync();render();}
+$('rotation').addEventListener('input',e=>{const desired=Number(e.target.value)*Math.PI/180;targetAngle=angle+Math.atan2(Math.sin(desired-angle),Math.cos(desired-angle));});
+$('left').addEventListener('click',()=>setTarget(targetAngle-Math.PI/4));
+$('right').addEventListener('click',()=>setTarget(targetAngle+Math.PI/4));
+$('upright').addEventListener('click',()=>setTarget(angle+Math.atan2(Math.sin(-angle),Math.cos(-angle))));
+$('fill').addEventListener('input',e=>{const n=Number(e.target.value);$('fillValue').textContent=n+'%';fluid.reset(n/100,angle);render();});
+$('pause').addEventListener('click',pauseToggle);$('reset').addEventListener('click',reset);
+function pointerAngle(e){const r=canvas.getBoundingClientRect();return Math.atan2(e.clientY-r.top-cy,e.clientX-r.left-cx);}
+canvas.addEventListener('pointerdown',e=>{if(dragId!==null)return;dragging=true;dragId=e.pointerId;previousPointer=pointerAngle(e);targetAngle=angle;canvas.setPointerCapture(e.pointerId);canvas.focus({preventScroll:true});$('hint').innerHTML='<strong>Keep turning</strong> — the wine follows gravity';});
+canvas.addEventListener('pointermove',e=>{
+  if(!dragging||e.pointerId!==dragId)return;
+  const next=pointerAngle(e),r=canvas.getBoundingClientRect(),radius=Math.hypot(e.clientX-r.left-cx,e.clientY-r.top-cy);
+  if(radius>25){const change=Math.atan2(Math.sin(next-previousPointer),Math.cos(next-previousPointer));targetAngle+=change;}
+  previousPointer=next;
+});
+function endDrag(e){if(e.pointerId!==dragId)return;dragging=false;dragId=null;$('hint').innerHTML='<strong>Drag around the bottle</strong> to rotate it';}
+canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);canvas.addEventListener('lostpointercapture',endDrag);
+document.addEventListener('keydown',e=>{
+  if(e.target instanceof HTMLInputElement||e.target instanceof HTMLButtonElement||e.target.tagName==='SUMMARY')return;
+  if(e.key==='ArrowLeft'){e.preventDefault();setTarget(targetAngle-Math.PI/18);}
+  else if(e.key==='ArrowRight'){e.preventDefault();setTarget(targetAngle+Math.PI/18);}
+  else if(e.code==='Space'){e.preventDefault();pauseToggle();}
+  else if(e.key.toLowerCase()==='r')reset();
+});
+document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;});
+function liquidImage(){
+  mctx.clearRect(0,0,SW,SH);mctx.fillStyle='#fff';mctx.beginPath();
+  // Overlapping particle kernels are reconstructed into one continuous surface.
+  const radius=SPACING*MS*.91;
+  for(let i=0;i<fluid.n;i++){const x=MX+fluid.x[i]*MS,y=MY+fluid.y[i]*MS;mctx.moveTo(x+radius,y);mctx.arc(x,y,radius,0,Math.PI*2);}
+  mctx.fill();
+  sctx.clearRect(0,0,SW,SH);sctx.filter='blur(1.6px)';sctx.drawImage(mask,0,0);sctx.filter='none';
+  const data=sctx.getImageData(0,0,SW,SH),p=data.data;
+  const co=Math.cos(angle),si=Math.sin(angle);
+  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){
+    const i=(y*SW+x)*4,a=p[i+3];if(a<70){p[i+3]=0;continue;}
+    const alpha=Math.max(0,Math.min(255,(a-78)*7));
+    const depth=Math.max(0,Math.min(1,((x-MX)/MS*si+(y-MY)/MS*co+1.6)/3.2));
+    const surface=Math.max(0,(235-a)/140),light=.92+.08*Math.cos((x-MX)/SW*5);
+    p[i]=Math.round((128-43*depth+64*surface)*light);
+    p[i+1]=Math.round(20-7*depth+30*surface);
+    p[i+2]=Math.round(47-10*depth+26*surface);p[i+3]=alpha;
+  }
+  cctx.putImageData(data,0,0);
+}
+function line(x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function render(){
+  if(!viewW)return;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const bg=ctx.createRadialGradient(cx,cy,10,cx,cy,Math.max(viewW,viewH)*.65);bg.addColorStop(0,'#27323b');bg.addColorStop(.60,'#1b242b');bg.addColorStop(1,'#141c21');ctx.fillStyle=bg;ctx.fillRect(0,0,viewW,viewH);
+  // Rotation dial doubles as an unobtrusive spatial reference.
+  const ring=scale*2.02;
+  ctx.strokeStyle='#a9bac316';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,ring,0,Math.PI*2);ctx.stroke();
+  for(let i=0;i<72;i++){
+    const a=i*Math.PI/36,r2=ring+(i%6===0?8:4);
+    ctx.strokeStyle=i%18===0?'#c6d0d359':'#a9bac327';line(cx+Math.sin(a)*ring,cy-Math.cos(a)*ring,cx+Math.sin(a)*r2,cy-Math.cos(a)*r2);
+  }
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);ctx.scale(scale,scale);
+  // The rendered vessel and collision boundary share the same silhouette.
+  ctx.save();ctx.shadowColor='#03080d99';ctx.shadowBlur=28;ctx.shadowOffsetX=7;ctx.shadowOffsetY=11;ctx.fillStyle='#263c3580';ctx.fill(bottlePath);ctx.restore();
+  const glass=ctx.createLinearGradient(-.63,0,.63,0);glass.addColorStop(0,'#87ac951c');glass.addColorStop(.13,'#a3c7a719');glass.addColorStop(.35,'#9aba9310');glass.addColorStop(.8,'#476b590e');glass.addColorStop(1,'#b0cab330');ctx.fillStyle=glass;ctx.fill(bottlePath);
+  liquidImage();ctx.save();ctx.clip(bottlePath);ctx.drawImage(colour,-MX/MS,-MY/MS,SW/MS,SH/MS);ctx.restore();
+  ctx.lineWidth=.020;ctx.strokeStyle='#adceaf8c';ctx.stroke(bottlePath);ctx.lineWidth=.007;ctx.strokeStyle='#d5ead441';ctx.stroke(bottlePath);
+  // Optical highlights stay attached to the glass, while the wine moves inside.
+  ctx.save();ctx.clip(bottlePath);
+  const shine=ctx.createLinearGradient(-.59,0,-.32,0);shine.addColorStop(0,'#e2efe300');shine.addColorStop(.4,'#f2fff329');shine.addColorStop(.65,'#f2fff310');shine.addColorStop(1,'#e2efe300');ctx.fillStyle=shine;ctx.fillRect(-.59,-.45,.27,1.84);
+  const side=ctx.createLinearGradient(.46,0,.60,0);side.addColorStop(0,'#d3e8d300');side.addColorStop(1,'#d3e8d333');ctx.fillStyle=side;ctx.fillRect(.46,-.53,.14,2.13);
+  ctx.strokeStyle='#e0ece633';ctx.lineWidth=.024;ctx.beginPath();ctx.moveTo(-.126,-1.82);ctx.lineTo(-.126,-1.17);ctx.bezierCurveTo(-.14,-.90,-.46,-.72,-.5,-.48);ctx.stroke();
+  ctx.strokeStyle='#dbe4d625';ctx.lineWidth=.018;ctx.beginPath();ctx.moveTo(-.45,1.59);ctx.quadraticCurveTo(0,1.66,.44,1.59);ctx.stroke();ctx.restore();
+  // Sealed cork: the interior remains closed when inverted.
+  const cork=ctx.createLinearGradient(-.2,0,.2,0);cork.addColorStop(0,'#9b7048');cork.addColorStop(.4,'#d9ae74');cork.addColorStop(1,'#a67c50');ctx.fillStyle=cork;ctx.beginPath();ctx.roundRect(-.17,TOP-.17,.34,.19,.025);ctx.fill();
+  ctx.strokeStyle='#674e3644';ctx.lineWidth=.012;for(let i=0;i<7;i++){const x=-.13+(i*.041)% .26,y=TOP-.145+(i*.037)%.11;line(x,y,x+.04,y-.012);}
+  ctx.fillStyle='#45584d';ctx.strokeStyle='#b2c5ae88';ctx.lineWidth=.012;ctx.beginPath();ctx.roundRect(-.204,TOP-.011,.408,.064,.018);ctx.fill();ctx.stroke();
+  // Small translucent maker's mark leaves the free surface visible.
+  ctx.fillStyle='#e3e3d399';ctx.textAlign='center';ctx.font='.086px Georgia';ctx.fillText('VIN',0,.72);ctx.strokeStyle='#d3d9c755';ctx.lineWidth=.004;line(-.10,.77,.10,.77);ctx.font='.045px system-ui';ctx.fillStyle='#e3e3d378';ctx.fillText('ROUGE',0,.87);
+  ctx.restore();
+  // Gravity reference never rotates with the bottle.
+  const gy=viewH-66;ctx.strokeStyle='#a7b6be77';ctx.lineWidth=1.2;line(27,gy-17,27,gy+3);line(23,gy-1,27,gy+3);line(31,gy-1,27,gy+3);ctx.font='11px system-ui';ctx.fillStyle='#a7b6be';ctx.textAlign='left';ctx.fillText('g',37,gy-2);
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  if(!last)last=now;
+  const elapsed=Math.min((now-last)/1000,.045);last=now;
+  if(!paused){
+    accumulator+=elapsed;let steps=0;
+    while(accumulator>=dt&&steps<5){
+      const delta=targetAngle-angle;
+      angle+=Math.max(-maxTurnSpeed*dt,Math.min(maxTurnSpeed*dt,delta*(1-Math.exp(-22*dt))));
+      if(Math.abs(targetAngle-angle)<.00005)angle=targetAngle;
+      fluid.step(dt,angle);accumulator-=dt;steps++;
+    }
+    if(steps===5)accumulator=Math.min(accumulator,dt);
+    render();
+  }
+  if(now-lastUI>70){sync();lastUI=now;}
+}
+// Begin with a settled fill so the first frame has a recognisable free surface.
+for(let i=0;i<30;i++)fluid.step(dt,0);
+resize();sync();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
